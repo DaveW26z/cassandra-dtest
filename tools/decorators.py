@@ -155,11 +155,20 @@ def known_failure(failure_source, jira_url, flaky=False, notes=''):
         assert_in(failure_source, valid_failure_sources)
         assert_is_instance(flaky, bool)
 
-        tagged_func = attr(known_failure=failure_source,
-                           jira_url=jira_url)(f)
+        try:
+            existing_failure_annotations = f.known_failure
+        except AttributeError:
+            existing_failure_annotations = []
+
+        new_annotation = [{'failure_source': failure_source, 'jira_url': jira_url, 'notes': notes, 'known_flaky': flaky}]
+
+        failure_annotations = existing_failure_annotations + new_annotation
+
+        tagged_func = attr(known_failure=failure_annotations)(f)
+
         if flaky:
             tagged_func = attr('known_flaky')(tagged_func)
 
-        tagged_func = attr(failure_notes=notes)(tagged_func)
         return tagged_func
+
     return wrapper
